@@ -3,6 +3,10 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/ui/logo'
 
+interface SidebarProps {
+  isMobile?: boolean
+}
+
 const menuItems = [
   { href: '/', icon: Home, label: 'ホーム' },
   { href: '/posts/new', icon: PlusSquare, label: '投稿' },
@@ -10,12 +14,18 @@ const menuItems = [
   { href: '/settings', icon: Settings, label: '設定' },
 ]
 
-export function Sidebar() {
+export function Sidebar({ isMobile }: SidebarProps) {
+  const baseStyles = isMobile 
+    ? 'w-full pt-12' 
+    : 'fixed h-full w-64 border-r bg-white p-4'
+
   return (
-    <div className="fixed h-full w-64 border-r bg-white p-4">
-      <div className="mb-8">
-        <Logo />
-      </div>
+    <div className={baseStyles}>
+      {!isMobile && (
+        <div className="mb-8">
+          <Logo />
+        </div>
+      )}
       <nav className="space-y-2">
         {menuItems.map((item) => (
           <Link key={item.href} href={item.href}>
