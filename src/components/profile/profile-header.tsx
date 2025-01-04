@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Edit } from 'lucide-react'
 import type { User } from '@/types/user'
+import { useRouter } from 'next/navigation'
 
 const MOCK_USER: User = {
   id: '1',
@@ -16,6 +17,8 @@ const MOCK_USER: User = {
 }
 
 export function ProfileHeader() {
+  const router = useRouter()
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -35,7 +38,11 @@ export function ProfileHeader() {
               <p className="mt-2 text-gray-600">{MOCK_USER.message}</p>
             </div>
           </div>
-          <Button variant="outline" size="icon">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => router.push('/profile/edit')}
+          >
             <Edit className="h-4 w-4" />
           </Button>
         </div>
