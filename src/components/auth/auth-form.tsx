@@ -94,7 +94,12 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         {/* 既存のソーシャルログインボタンなどは変更なし */}
       </CardContent>
-      <CardFooter className="justify-center">
+      <CardFooter className="flex-col space-y-4">
+        {mode === 'signin' && (
+          <Link href="/auth/reset-password" className="text-sm text-purple-600 hover:underline">
+            パスワードをお忘れの方
+          </Link>
+        )}
         {mode === 'signin' ? (
           <p className="text-sm text-gray-600">
             アカウントをお持ちでない方は
