@@ -1,75 +1,33 @@
 "use client"
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { ImagePlus } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/contexts/auth-context'
 
 export function PostForm() {
   const router = useRouter()
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
+  const [image, setImage] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [description, setDescription] = useState('')
   const [userType, setUserType] = useState<'guitarist' | 'bassist'>('guitarist')
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
-
-    setSelectedFile(file)
-
-    // プレビュー表示のみ
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setPreview(reader.result as string)
+    if (file) {
+      setImage(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-    reader.readAsDataURL(file)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !selectedFile) return
-
-    try {
-      setLoading(true)
-
-      // 画像のアップロード
-      const path = `post-${Date.now()}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('posts')
-        .upload(path, selectedFile)
-
-      if (uploadError) throw uploadError
-
-      // 公開URLを取得
-      const { data: { publicUrl } } = supabase.storage
-        .from('posts')
-        .getPublicUrl(uploadData.path)
-
-      // 投稿データの作成
-      const { error: postError } = await supabase
-        .from('posts')
-        .insert({
-          user_id: user.id,
-          image_url: publicUrl,
-          description,
-        })
-
-      if (postError) throw postError
-
-      router.push('/')
-      router.refresh()
-    } catch (error) {
-      console.error('Error creating post:', error)
-      alert('投稿の作成に失敗しました')
-    } finally {
-      setLoading(false)
-    }
+    // TODO: Supabaseへの投稿処理を実装
+    console.log({ image, description, userType })
   }
 
   return (
@@ -145,9 +103,7 @@ export function PostForm() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={loading || !preview}>
-            {loading ? '投稿中...' : '投稿する'}
-          </Button>
+          <Button type="submit" className="w-full">投稿する</Button>
         </CardFooter>
       </form>
     </Card>
