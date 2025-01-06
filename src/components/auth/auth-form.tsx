@@ -17,6 +17,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('')
+  const [userType, setUserType] = useState<'guitarist' | 'bassist'>('guitarist')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,10 +34,13 @@ export function AuthForm({ mode }: AuthFormProps) {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              username,
+              user_type: userType,
+            }
           },
         })
         if (error) throw error
-        // サインアップ成功時のメッセージ
         alert('確認メールを送信しました。メールをご確認ください。')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -67,6 +72,46 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'signup' && (
+            <>
+              <div>
+                <label className="block mb-2 text-sm">ユーザー名</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                  required
+                  minLength={3}
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm">ユーザータイプ</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="guitarist"
+                      checked={userType === 'guitarist'}
+                      onChange={(e) => setUserType(e.target.value as 'guitarist' | 'bassist')}
+                      className="mr-2"
+                    />
+                    ギタリスト
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="bassist"
+                      checked={userType === 'bassist'}
+                      onChange={(e) => setUserType(e.target.value as 'guitarist' | 'bassist')}
+                      className="mr-2"
+                    />
+                    ベーシスト
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
           <div>
             <label className="block mb-2 text-sm">メールアドレス</label>
             <input
@@ -91,8 +136,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             {loading ? '処理中...' : mode === 'signin' ? 'ログイン' : 'アカウント作成'}
           </Button>
         </form>
-
-        {/* 既存のソーシャルログインボタンなどは変更なし */}
       </CardContent>
       <CardFooter className="flex-col space-y-4">
         {mode === 'signin' && (
