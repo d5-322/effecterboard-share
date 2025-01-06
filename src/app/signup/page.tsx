@@ -1,9 +1,9 @@
-import { AuthForm } from '@/components/auth/auth-form'
+import { SignUpForm } from '@/components/auth/signup-form'
 
 export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <AuthForm mode="signup" />
+      <SignUpForm />
     </div>
   )
 }
