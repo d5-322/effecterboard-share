@@ -1,16 +1,19 @@
 "use client"
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { ImagePlus } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 export function PostForm() {
   const router = useRouter()
   const [image, setImage] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [description, setDescription] = useState('')
-  const [userType, setUserType] = useState<'guitarist' | 'bassist'>('guitarist')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -26,9 +29,50 @@ export function PostForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Supabaseへの投稿処理を実装
-    console.log({ image, description, userType })
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('ログインが必要です')
+
+      if (!image) throw new Error('画像を選択してください')
+
+      // 画像のアップロード（ユーザーごとのフォルダ構造）
+      const fileExt = image.name.split('.').pop()
+      const fileName = `${user.id}/${Date.now()}-${Math.random()}.${fileExt}`
+      
+      const { error: uploadError } = await supabase.storage
+        .from('posts')
+        .upload(fileName, image)
+      
+      if (uploadError) throw uploadError
+
+      // 画像URLの取得
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(fileName)
+
+      // 投稿データの保存
+      const { error: insertError } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          image_url: publicUrl,
+          description: description
+        })
+
+      if (insertError) throw insertError
+
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '投稿に失敗しました')
+    } finally {
+      setLoading(false)
+    }
   }
+
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -36,6 +80,11 @@ export function PostForm() {
         <CardHeader>
           <h2 className="text-2xl font-bold">新規投稿</h2>
         </CardHeader>
+        {error && (
+          <div className="mx-6 mb-4 p-2 text-sm text-red-600 bg-red-50 rounded">
+            {error}
+          </div>
+        )}
         <CardContent className="space-y-4">
           <div>
             <label className="block mb-2 text-sm font-medium">画像</label>
@@ -54,6 +103,7 @@ export function PostForm() {
                 onChange={handleImageChange}
                 className="hidden"
                 id="image-input"
+                required
               />
               <Button
                 type="button"
@@ -72,38 +122,20 @@ export function PostForm() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full p-2 border rounded-md"
+              placeholder="使用機材の情報などを入力"
               rows={4}
+              required
             />
-          </div>
-
-          <div>
-            <label className="block mb-2 text-sm font-medium">投稿者タイプ</label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="guitarist"
-                  checked={userType === 'guitarist'}
-                  onChange={(e) => setUserType(e.target.value as 'guitarist' | 'bassist')}
-                  className="mr-2"
-                />
-                ギタリスト
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="bassist"
-                  checked={userType === 'bassist'}
-                  onChange={(e) => setUserType(e.target.value as 'guitarist' | 'bassist')}
-                  className="mr-2"
-                />
-                ベーシスト
-              </label>
-            </div>
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full">投稿する</Button>
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? '投稿中...' : '投稿する'}
+          </Button>
         </CardFooter>
       </form>
     </Card>
