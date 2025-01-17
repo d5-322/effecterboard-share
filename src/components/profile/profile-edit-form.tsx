@@ -1,27 +1,53 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { ImagePlus } from 'lucide-react'
-import type { User } from '@/types/user'
+import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/database.types'
 
-const MOCK_USER: User = {
-  id: '1',
-  email: 'user@example.com',
-  username: 'Guitar Hero',
-  userType: 'guitarist',
-  avatar_url: '/images/default-avatar.png',
-  message: 'ブルースギター愛好家です！'
-}
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export function ProfileEditForm() {
-  const [username, setUsername] = useState(MOCK_USER.username)
-  const [userType, setUserType] = useState(MOCK_USER.userType)
-  const [message, setMessage] = useState(MOCK_USER.message || '')
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [username, setUsername] = useState('')
+  const [userType, setUserType] = useState<'guitarist' | 'bassist'>('guitarist')
+  const [message, setMessage] = useState('')
   const [avatar, setAvatar] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error) {
+        setError('プロフィールの取得に失敗しました')
+        return
+      }
+
+      if (data) {
+        setUsername(data.username || '')
+        setUserType(data.user_type || 'guitarist')
+        setMessage(data.message || '')
+        setCurrentAvatarUrl(data.avatar_url)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -37,8 +63,50 @@ export function ProfileEditForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Supabaseとの連携
-    console.log({ username, userType, message, avatar })
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('ユーザーが見つかりません')
+
+      let avatarUrl = currentAvatarUrl
+      if (avatar) {
+        const fileExt = avatar.name.split('.').pop()
+        const fileName = `${user.id}.${fileExt}`
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, avatar, { upsert: true })
+        
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName)
+        
+        avatarUrl = publicUrl
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          username,
+          user_type: userType,
+          message,
+          avatar_url: avatarUrl,
+        })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      router.push('/profile')
+      router.refresh()
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'プロフィールの更新に失敗しました')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -47,13 +115,18 @@ export function ProfileEditForm() {
         <CardHeader>
           <h2 className="text-2xl font-bold">プロフィール編集</h2>
         </CardHeader>
+        {error && (
+          <div className="mx-6 mb-4 p-2 text-sm text-red-600 bg-red-50 rounded">
+            {error}
+          </div>
+        )}
         <CardContent className="space-y-6">
           <div>
             <label className="block mb-2 text-sm font-medium">プロフィール画像</label>
             <div className="flex items-center gap-4">
               <div className="relative h-24 w-24">
                 <Image
-                  src={preview || MOCK_USER.avatar_url}
+                  src={preview || currentAvatarUrl || '/images/default-avatar.png'}
                   alt="Profile"
                   fill
                   className="rounded-full object-cover"
@@ -84,6 +157,7 @@ export function ProfileEditForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full p-2 border rounded-md"
+              required
             />
           </div>
 
@@ -124,8 +198,8 @@ export function ProfileEditForm() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full">
-            保存する
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? '保存中...' : '保存する'}
           </Button>
         </CardFooter>
       </form>

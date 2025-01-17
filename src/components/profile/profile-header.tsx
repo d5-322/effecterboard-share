@@ -1,23 +1,47 @@
 "use client"
 
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Edit } from 'lucide-react'
-import type { User } from '@/types/user'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/database.types'
 
-const MOCK_USER: User = {
-  id: '1',
-  email: 'user@example.com',
-  username: 'Guitar Hero',
-  userType: 'guitarist',
-  avatar_url: '/images/default-avatar.png',
-  message: 'ブルースギター愛好家です！'
-}
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export function ProfileHeader() {
   const router = useRouter()
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error) {
+        console.error('Error fetching profile:', error)
+        return
+      }
+
+      setProfile(data)
+      setLoading(false)
+    }
+
+    fetchProfile()
+  }, [])
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   return (
     <Card>
@@ -26,16 +50,16 @@ export function ProfileHeader() {
           <div className="flex gap-6">
             <div className="relative h-24 w-24">
               <Image
-                src={MOCK_USER.avatar_url}
-                alt={MOCK_USER.username}
+                src={profile?.avatar_url || '/images/default-avatar.png'}
+                alt={profile?.username || 'Profile'}
                 fill
                 className="rounded-full object-cover"
               />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">{MOCK_USER.username}</h2>
-              <p className="text-purple-600">{MOCK_USER.userType}</p>
-              <p className="mt-2 text-gray-600">{MOCK_USER.message}</p>
+              <h2 className="text-2xl font-bold">{profile?.username}</h2>
+              <p className="text-purple-600">{profile?.user_type}</p>
+              <p className="mt-2 text-gray-600">{profile?.message}</p>
             </div>
           </div>
           <Button 
