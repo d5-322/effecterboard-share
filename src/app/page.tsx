@@ -4,13 +4,10 @@ import { useState, useEffect } from 'react'
 import { PostCard } from '@/components/posts/post-card'
 import { PostFilter } from '@/components/posts/post-filter'
 import { supabase } from '@/lib/supabase'
-import type { Database } from '@/types/database.types'
+import type { Post } from '@/types/post'
 
-type Post = Database['public']['Tables']['posts']['Row'] & {
-  profiles: {
-    user_type: string
-  } | null,
-  likes_count: number  // 変更
+interface Like {
+  user_id: string
 }
 
 export default function Home() {
@@ -20,41 +17,91 @@ export default function Home() {
   const [userType, setUserType] = useState<'all' | 'guitarist' | 'bassist'>('all')
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select(`
-          *,
-          profiles (user_type),
-          likes_count:likes(count)
-        `)
-        .order('created_at', { ascending: sort === 'oldest' })
-
-      if (error) {
-        console.error('投稿の取得に失敗しました:', error)
-        return
-      }
-
-      // likes_countを数値として処理
-      const postsWithLikes = data.map(post => ({
-        ...post,
-        likes_count: post.likes_count?.count || 0
-      }))
-
-      setPosts(postsWithLikes)
-      setLoading(false)
-    }
-
     fetchPosts()
   }, [sort])
 
+  const fetchPosts = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    let query = supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles!inner (user_type),
+        likes (user_id)
+      `)
+      .order('created_at', { ascending: sort === 'oldest' })
+
+    if (userType !== 'all') {
+      query = query.eq('profiles.user_type', userType)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('投稿の取得に失敗しました:', error)
+      return
+    }
+
+    const postsWithLikes = await Promise.all(data.map(async (post) => {
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', post.id)
+
+      return {
+        ...post,
+        user_type: post.profiles.user_type,
+        likes_count: count || 0,
+        is_liked: post.likes?.some((like: Like) => like.user_id === user?.id) || false
+      }
+    }))
+
+    setPosts(postsWithLikes)
+    setLoading(false)
+  }
+  const handleLike = async (postId: string, isLiked: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+  
+    try {
+      if (isLiked) {
+        await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id)
+        
+        setPosts(posts.map(post => 
+          post.id === postId 
+            ? { ...post, is_liked: false, likes_count: post.likes_count - 1 }
+            : post
+        ))
+      } else {
+        await supabase
+          .from('likes')
+          .insert({
+            post_id: postId,
+            user_id: user.id
+          })
+        
+        setPosts(posts.map(post => 
+          post.id === postId 
+            ? { ...post, is_liked: true, likes_count: post.likes_count + 1 }
+            : post
+        ))
+      }
+    } catch (error) {
+      console.error('いいねの更新に失敗しました:', error)
+    }
+  }
+  
+
   const filteredPosts = posts.filter(post => 
-    userType === 'all' || post.profiles?.user_type === userType
+    userType === 'all' || post.user_type === userType
   )
 
-  if (loading) {
-    return <div>読み込み中...</div>
-  }
+  if (loading) return <div>読み込み中...</div>
 
   return (
     <div>
@@ -67,7 +114,11 @@ export default function Home() {
       />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredPosts.map((post) => (
-          <PostCard key={post.id} post={{...post, likes: post.likes_count}} />
+          <PostCard 
+            key={post.id} 
+            post={post}
+            onLike={() => handleLike(post.id, post.is_liked)}
+          />
         ))}
       </div>
       {filteredPosts.length === 0 && (

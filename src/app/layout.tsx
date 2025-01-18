@@ -28,7 +28,7 @@ export default function RootLayout({
             <MobileNav />
             <main className="flex-1 lg:pl-64">
               <div className="container mx-auto p-6 pt-20 lg:pt-6">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-1 lg:grid-cols-2">
                   {children}
                 </div>
               </div>

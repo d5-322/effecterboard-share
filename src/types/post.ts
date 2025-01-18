@@ -6,4 +6,5 @@ export interface Post {
   user_type: 'guitarist' | 'bassist'
   created_at: string
   likes_count: number
+  is_liked: boolean
 }
