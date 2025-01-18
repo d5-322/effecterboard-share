@@ -1,42 +1,60 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PostCard } from '@/components/posts/post-card'
 import { PostFilter } from '@/components/posts/post-filter'
+import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/database.types'
 
-const MOCK_POSTS = [
-  {
-    id: '1',
-    user_id: 'user1',
-    image_url: '/images/sample-board-1.jpg',
-    description: 'My favorite setup for blues',
-    user_type: 'guitarist',
-    created_at: '2024-01-20T12:00:00Z',
-    likes_count: 42
-  },
-  {
-    id: '2',
-    user_id: 'user2',
-    image_url: '/images/sample-board-2.jpg',
-    description: 'Bass effects chain',
-    user_type: 'bassist',
-    created_at: '2024-01-19T15:30:00Z',
-    likes_count: 35
-  }
-] as const
+type Post = Database['public']['Tables']['posts']['Row'] & {
+  profiles: {
+    user_type: string
+  } | null,
+  likes_count: number  // 変更
+}
 
 export default function Home() {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<'newest' | 'oldest'>('newest')
   const [userType, setUserType] = useState<'all' | 'guitarist' | 'bassist'>('all')
 
-  const filteredPosts = MOCK_POSTS
-    .filter(post => userType === 'all' || post.user_type === userType)
-    .sort((a, b) => {
-      if (sort === 'newest') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles (user_type),
+          likes_count:likes(count)
+        `)
+        .order('created_at', { ascending: sort === 'oldest' })
+
+      if (error) {
+        console.error('投稿の取得に失敗しました:', error)
+        return
       }
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    })
+
+      // likes_countを数値として処理
+      const postsWithLikes = data.map(post => ({
+        ...post,
+        likes_count: post.likes_count?.count || 0
+      }))
+
+      setPosts(postsWithLikes)
+      setLoading(false)
+    }
+
+    fetchPosts()
+  }, [sort])
+
+  const filteredPosts = posts.filter(post => 
+    userType === 'all' || post.profiles?.user_type === userType
+  )
+
+  if (loading) {
+    return <div>読み込み中...</div>
+  }
 
   return (
     <div>
@@ -49,9 +67,12 @@ export default function Home() {
       />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredPosts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard key={post.id} post={{...post, likes: post.likes_count}} />
         ))}
       </div>
+      {filteredPosts.length === 0 && (
+        <p className="text-center text-gray-500 mt-8">投稿が見つかりません</p>
+      )}
     </div>
   )
 }

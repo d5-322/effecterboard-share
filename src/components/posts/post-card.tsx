@@ -2,7 +2,14 @@ import Image from 'next/image'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Heart } from 'lucide-react'
-import type { Post } from '@/types/post'
+import type { Database } from '@/types/database.types'
+
+type Post = Database['public']['Tables']['posts']['Row'] & {
+  profiles: {
+    user_type: string
+  } | null
+  likes: number | null
+}
 
 interface PostCardProps {
   post: Post
@@ -13,7 +20,7 @@ export function PostCard({ post }: PostCardProps) {
     <Card className="overflow-hidden">
       <CardHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div className="text-sm font-medium">{post.user_type}</div>
+          <div className="text-sm font-medium">{post.profiles?.user_type}</div>
           <div className="text-sm text-gray-500">
             {new Date(post.created_at).toLocaleDateString()}
           </div>
@@ -34,7 +41,7 @@ export function PostCard({ post }: PostCardProps) {
           <p className="text-sm">{post.description}</p>
           <Button variant="ghost" size="icon">
             <Heart className="h-5 w-5" />
-            <span className="ml-1">{post.likes_count}</span>
+            <span className="ml-1">{post.likes || 0}</span>
           </Button>
         </div>
       </CardFooter>
