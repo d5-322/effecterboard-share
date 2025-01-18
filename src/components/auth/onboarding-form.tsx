@@ -70,43 +70,49 @@ export function OnboardingForm() {
     setError(null)
 
     try {
-      // セッションからユーザー情報を取得
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('ユーザー情報が見つかりません')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('ユーザー情報が見つかりません')
 
       let avatarUrl = null
       if (avatar) {
         const fileExt = avatar.name.split('.').pop()
-        const fileName = `${session.user.id}.${fileExt}`
+        const fileName = `${user.id}.${fileExt}`
+        
+        // アバター画像のアップロード
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(fileName, avatar, { upsert: true })
+          .upload(`${user.id}/${fileName}`, avatar, { 
+            upsert: true,
+            contentType: avatar.type 
+          })
         
         if (uploadError) throw uploadError
 
+        // 公開URLの取得
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
-          .getPublicUrl(fileName)
+          .getPublicUrl(`${user.id}/${fileName}`)
         
         avatarUrl = publicUrl
       }
 
+      // プロフィールの更新
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
           username,
           user_type: userType,
           message,
-          avatar_url: avatarUrl,
+          ...(avatarUrl && { avatar_url: avatarUrl })
         })
-        .eq('id', session.user.id)
+        .eq('id', user.id)
 
       if (updateError) throw updateError
 
       router.push('/')
       router.refresh()
     } catch (error) {
-      console.error('Error details:', error) // エラー詳細の確認
+      console.error('Error details:', error)
       setError(error instanceof Error ? error.message : 'エラーが発生しました')
     } finally {
       setLoading(false)

@@ -72,18 +72,38 @@ export function ProfileEditForm() {
 
       let avatarUrl = currentAvatarUrl
       if (avatar) {
+        // 新しいファイル名の生成（タイムスタンプ付き）
         const fileExt = avatar.name.split('.').pop()
-        const fileName = `${user.id}.${fileExt}`
-        
+        const timestamp = Date.now()
+        const newFileName = `${user.id}/${user.id}_${timestamp}.${fileExt}`
+
+        // 既存の画像を削除（ユーザーIDのフォルダ内のすべてのファイル）
+        if (currentAvatarUrl) {
+          const { data: files } = await supabase.storage
+            .from('avatars')
+            .list(user.id)
+
+          if (files && files.length > 0) {
+            const filesToRemove = files.map(file => `${user.id}/${file.name}`)
+            await supabase.storage
+              .from('avatars')
+              .remove(filesToRemove)
+          }
+        }
+
+        // 新しい画像をアップロード
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(fileName, avatar, { upsert: true })
+          .upload(newFileName, avatar, {
+            contentType: avatar.type
+          })
         
         if (uploadError) throw uploadError
 
+        // 新しい公開URLを取得
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
-          .getPublicUrl(fileName)
+          .getPublicUrl(newFileName)
         
         avatarUrl = publicUrl
       }
@@ -94,7 +114,7 @@ export function ProfileEditForm() {
           username,
           user_type: userType,
           message,
-          avatar_url: avatarUrl,
+          avatar_url: avatarUrl
         })
         .eq('id', user.id)
 
@@ -103,11 +123,13 @@ export function ProfileEditForm() {
       router.push('/profile')
       router.refresh()
     } catch (error) {
+      console.error('Error details:', error)
       setError(error instanceof Error ? error.message : 'プロフィールの更新に失敗しました')
     } finally {
       setLoading(false)
     }
   }
+
 
   return (
     <Card>
