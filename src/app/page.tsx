@@ -27,7 +27,7 @@ export default function Home() {
       .from('posts')
       .select(`
         *,
-        profiles!inner (user_type),
+        profiles!inner (user_type, username),
         likes (user_id)
       `)
       .order('created_at', { ascending: sort === 'oldest' })
@@ -52,6 +52,7 @@ export default function Home() {
       return {
         ...post,
         user_type: post.profiles.user_type,
+        username: post.profiles.username,
         likes_count: count || 0,
         is_liked: post.likes?.some((like: Like) => like.user_id === user?.id) || false
       }
@@ -106,21 +107,26 @@ export default function Home() {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">最新の投稿</h1>
+      
       <PostFilter
         sort={sort}
         userType={userType}
         onSortChange={setSort}
         onUserTypeChange={setUserType}
       />
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+      <div className="flex flex-wrap gap-6">
         {filteredPosts.map((post) => (
-          <PostCard 
-            key={post.id} 
-            post={post}
-            onLike={() => handleLike(post.id, post.is_liked)}
-          />
+          <div className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
+            <PostCard
+              key={post.id}
+              post={post}
+              onLike={() => handleLike(post.id, post.is_liked)}
+            />
+          </div>
         ))}
       </div>
+
       {filteredPosts.length === 0 && (
         <p className="text-center text-gray-500 mt-8">投稿が見つかりません</p>
       )}
