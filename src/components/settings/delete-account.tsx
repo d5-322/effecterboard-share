@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 
 export function DeleteAccount() {
@@ -22,7 +21,7 @@ export function DeleteAccount() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('ユーザーが見つかりません')
 
-      // パスワードの再認証
+      // パスワード認証
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email || '',
         password,
@@ -33,80 +32,128 @@ export function DeleteAccount() {
         return
       }
 
-      // ユーザーの削除
+      // ユーザー削除処理
       const { error: deleteError } = await supabase.rpc('delete_user')
       if (deleteError) throw deleteError
 
-      // サインアウト
       await supabase.auth.signOut()
       router.push('/signup')
       router.refresh()
     } catch (error) {
-      console.error('Delete error:', error)
-      setError('アカウントの削除に失敗しました')
+      console.error('削除エラー:', error)
+      setError(error instanceof Error ? error.message : 'アカウント削除に失敗しました')
     } finally {
       setLoading(false)
     }
   }
 
-
   return (
-    <Card className="border-red-200">
-      <CardHeader>
+    <div className="border border-red-100 rounded-lg bg-red-50/30 shadow-sm">
+      <div className="px-6 py-4 border-b border-red-100">
         <h2 className="text-2xl font-bold text-red-600">アカウント削除</h2>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <div className="mb-4 p-2 text-sm text-red-600 bg-red-50 rounded">
-            {error}
-          </div>
-        )}
+      </div>
+
+      <div className="px-6 py-6 space-y-6">
+        <AlertMessage message={error} type="error" />
+
         {!isConfirmOpen ? (
-          <div>
-            <p className="mb-4 text-gray-600">
-              アカウントを削除すると、すべてのデータが完全に削除され、復元することはできません。
+          <div className="space-y-4">
+            <p className="text-gray-600 leading-relaxed">
+              アカウントを削除すると全てのデータが完全に削除され、復元できません。
             </p>
             <Button
               variant="destructive"
               onClick={() => setIsConfirmOpen(true)}
+              className="w-full sm:w-auto"
             >
               アカウントを削除する
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleDelete} className="space-y-4">
-            <p className="text-red-600 font-semibold">
+          <form onSubmit={handleDelete} className="space-y-6">
+            <p className="text-red-600 font-medium">
               本当にアカウントを削除しますか？
             </p>
-            <div>
-              <label className="block mb-2 text-sm">パスワードを入力して確認</label>
-              <input
+
+            <div className="space-y-4">
+              <Input
                 type="password"
+                label="パスワードを入力して確認"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border rounded-md"
                 required
               />
-            </div>
-            <div className="flex gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsConfirmOpen(false)}
-              >
-                キャンセル
-              </Button>
-              <Button 
-                type="submit" 
-                variant="destructive"
-                disabled={loading}
-              >
-                {loading ? '削除中...' : '削除する'}
-              </Button>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsConfirmOpen(false)}
+                  className="flex-1"
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  {loading ? '削除中...' : '削除する'}
+                </Button>
+              </div>
             </div>
           </form>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
+
+// 再利用可能なコンポーネント
+const AlertMessage = ({ 
+  message, 
+  type 
+}: {
+  message: string | null
+  type: 'error' | 'success'
+}) => {
+  if (!message) return null
+
+  return (
+    <div className={`p-3 text-sm rounded-md ${
+      type === 'error' 
+        ? 'text-red-600 bg-red-50' 
+        : 'text-green-600 bg-green-50'
+    }`}>
+      {message}
+    </div>
+  )
+}
+
+const Input = ({
+  type = 'text',
+  label,
+  value,
+  onChange,
+  required = false
+}: {
+  type?: string
+  label: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  required?: boolean
+}) => (
+  <div>
+    <label className="block mb-2 text-sm font-medium text-gray-700">
+      {label}
+    </label>
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      className="w-full p-2 border rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+      required={required}
+    />
+  </div>
+)

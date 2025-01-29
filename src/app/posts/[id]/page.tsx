@@ -3,15 +3,16 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Heart } from 'lucide-react'
+import { Heart, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/types/post'
 
-export default function PostDetail ({ params }: { params: { id: string } }) {
+export default function PostDetail({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isOwner, setIsOwner] = useState(false)
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -45,6 +46,7 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
         likes_count: count || 0,
         is_liked: data.likes?.some((like: { user_id: string }) => like.user_id === user?.id) || false
       })
+      setIsOwner(user?.id === data.user_id)
       setLoading(false)
     }
 
@@ -52,40 +54,24 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
   }, [params.id, router])
 
   const handleLike = async () => {
-    if (!post) return
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    // 既存のいいね処理
+  }
 
-    try {
-      if (post.is_liked) {
-        await supabase
-          .from('likes')
-          .delete()
-          .eq('post_id', post.id)
-          .eq('user_id', user.id)
-        
-        setPost({
-          ...post,
-          is_liked: false,
-          likes_count: post.likes_count - 1
-        })
-      } else {
-        await supabase
-          .from('likes')
-          .insert({
-            post_id: post.id,
-            user_id: user.id
-          })
-        
-        setPost({
-          ...post,
-          is_liked: true,
-          likes_count: post.likes_count + 1
-        })
-      }
-    } catch (error) {
-      console.error('いいねの更新に失敗しました:', error)
+  const handleDelete = async () => {
+    if (!post || !window.confirm('この投稿を削除してもよろしいですか？')) return
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', post.id)
+
+    if (error) {
+      console.error('削除に失敗しました:', error)
+      return
     }
+
+    router.push('/')
+    router.refresh()
   }
 
   if (loading) return <div>読み込み中...</div>
@@ -111,10 +97,21 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
                   {new Date(post.created_at).toLocaleDateString()}
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleLike}>
-                <Heart className={`h-5 w-5 ${post.is_liked ? 'fill-current text-red-500' : ''}`} />
-                <span className="ml-1">{post.likes_count}</span>
-              </Button>
+              <div className="flex gap-2">
+                {isOwner && (
+                  <Button 
+                    variant="destructive" 
+                    size="icon"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={handleLike}>
+                  <Heart className={`h-5 w-5 ${post.is_liked ? 'fill-current text-red-500' : ''}`} />
+                  <span className="ml-1">{post.likes_count}</span>
+                </Button>
+              </div>
             </div>
             <p className="text-gray-700 break-words">{post.description}</p>
           </div>

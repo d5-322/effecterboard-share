@@ -75,17 +75,19 @@ export function PostForm() {
 
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto bg-white border rounded-lg shadow-sm">
       <form onSubmit={handleSubmit}>
-        <CardHeader>
+        <div className="px-6 pt-6 pb-4">
           <h2 className="text-2xl font-bold">新規投稿</h2>
-        </CardHeader>
+        </div>
+        
         {error && (
           <div className="mx-6 mb-4 p-2 text-sm text-red-600 bg-red-50 rounded">
             {error}
           </div>
         )}
-        <CardContent className="space-y-4">
+
+        <div className="px-6 py-4 space-y-4">
           <div>
             <label className="block mb-2 text-sm font-medium">画像</label>
             <div className="border-2 border-dashed rounded-lg p-4 text-center">
@@ -127,8 +129,9 @@ export function PostForm() {
               required
             />
           </div>
-        </CardContent>
-        <CardFooter>
+        </div>
+
+        <div className="px-6 pb-6 pt-4">
           <Button 
             type="submit" 
             className="w-full"
@@ -136,8 +139,8 @@ export function PostForm() {
           >
             {loading ? '投稿中...' : '投稿する'}
           </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </div>
   )
 }
