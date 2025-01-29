@@ -92,7 +92,7 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
   if (!post) return null
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="relative aspect-video">
@@ -116,10 +116,10 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
                 <span className="ml-1">{post.likes_count}</span>
               </Button>
             </div>
-            <p className="text-gray-700">{post.description}</p>
+            <p className="text-gray-700 break-words">{post.description}</p>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

@@ -39,6 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-public/images/default-avatar.png
 public/images/sample-board-1.jpg
 public/images/sample-board-2.jpg

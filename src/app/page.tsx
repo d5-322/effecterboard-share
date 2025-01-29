@@ -117,12 +117,8 @@ export default function Home() {
 
       <div className="flex flex-wrap gap-6">
         {filteredPosts.map((post) => (
-          <div className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
-            <PostCard
-              key={post.id}
-              post={post}
-              onLike={() => handleLike(post.id, post.is_liked)}
-            />
+          <div key={post.id} className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
+            <PostCard post={post} onLike={() => handleLike(post.id, post.is_liked)}/>
           </div>
         ))}
       </div>
