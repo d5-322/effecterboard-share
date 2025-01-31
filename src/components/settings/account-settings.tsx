@@ -16,19 +16,18 @@ export function AccountSettings() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // 現在のユーザー情報の取得
   useEffect(() => {
     const getCurrentUser = async () => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser()
-        if (error) throw error
-        if (user?.email) setCurrentEmail(user.email)
-      } catch (error) {
-        setError('ユーザー情報の取得に失敗しました')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email) {
+        setCurrentEmail(user.email)
       }
     }
     getCurrentUser()
   }, [])
 
+  // メールアドレス更新
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -41,25 +40,34 @@ export function AccountSettings() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ email: newEmail })
-      
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail,
+      })
+
+      // Supabaseのエラーコードを確認
       if (error) {
-        const errorMessage = error.message.toLowerCase()
-        if (errorMessage.includes('already') || error.status === 422) {
-          setError('このメールアドレスは既に使用されています')
+        // エラーメッセージまたはエラーコードに基づいて判定
+        if (error.message.includes('already taken') || 
+            error.message.includes('already exists') || 
+            error.message.toLowerCase().includes('already registered') ||
+            error.status === 422) {  // 422はUnprocessable Entityエラー
+          setError('このメールアドレスは既に他のユーザーに使用されています')
+          setLoading(false)
           return
         }
         throw error
       }
 
+      // エラーがない場合は確認ページへ
       router.push('/settings/email-verification')
     } catch (error) {
-      setError(error instanceof Error ? error.message : '更新に失敗しました')
-    } finally {
+      console.error('Email update error:', error)  // デバッグ用
+      setError(error instanceof Error ? error.message : 'メールアドレスの更新に失敗しました')
       setLoading(false)
     }
   }
 
+  // パスワード更新
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -67,41 +75,47 @@ export function AccountSettings() {
     setSuccessMessage(null)
 
     if (newPassword.length < 6) {
-      setError('パスワードは6文字以上必要です')
+      setError('パスワードは6文字以上である必要があります')
       setLoading(false)
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setError('パスワードが一致しません')
+      setError('新しいパスワードと確認用パスワードが一致しません')
       setLoading(false)
       return
     }
 
     try {
+      // 現在のパスワードで認証を確認
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: currentEmail,
         password: currentPassword,
       })
 
-      if (signInError) throw new Error('現在のパスワードが不正です')
+      if (signInError) throw new Error('現在のパスワードが正しくありません')
+
+      // 現在のパスワードと新しいパスワードが同じかチェック
       if (currentPassword === newPassword) {
-        setError('新しいパスワードを設定してください')
+        setError('新しいパスワードは古いパスワードと異なる必要があります')
+        setLoading(false)
         return
       }
 
+      // パスワード更新
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       })
 
       if (updateError) throw updateError
 
-      setSuccessMessage('パスワードを更新しました')
+      setSuccessMessage('パスワードの更新が完了しました')
+      // フォームをリセット
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     } catch (error) {
-      setError(error instanceof Error ? error.message : '更新に失敗しました')
+      setError(error instanceof Error ? error.message : 'パスワードの更新に失敗しました')
     } finally {
       setLoading(false)
     }
