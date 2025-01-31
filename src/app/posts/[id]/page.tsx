@@ -64,6 +64,7 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
     fetchPost()
   }, [params.id, router])
 
+  // いいね機能
   const handleLike = async () => {
     if (!post) return
     const { data: { user } } = await supabase.auth.getUser()
@@ -101,6 +102,7 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
     }
   }
 
+  // 投稿削除
   const handleDelete = async () => {
     if (!post || !currentUserId || post.user_id !== currentUserId) return
   
@@ -189,7 +191,7 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
                 )}
               </div>
             </div>
-            <p className="text-gray-700 break-words">{post.description}</p>
+            <p className="text-gray-700 break-words whitespace-pre-line">{post.description}</p>
           </div>
         </div>
       </div>

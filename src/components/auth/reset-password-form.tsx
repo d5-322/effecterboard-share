@@ -1,13 +1,11 @@
 "use client"
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 
 export function ResetPasswordForm() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -23,6 +21,7 @@ export function ResetPasswordForm() {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       })
+      
       if (error) throw error
       setMessage('パスワードリセットのメールを送信しました')
     } catch (error) {
@@ -59,7 +58,7 @@ export function ResetPasswordForm() {
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full bg-gray-700" disabled={loading}>
             {loading ? '送信中...' : 'リセットメールを送信'}
           </Button>
         </form>

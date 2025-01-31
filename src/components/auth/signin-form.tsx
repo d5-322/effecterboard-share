@@ -72,7 +72,7 @@ export function SignInForm() {
         </form>
       </CardContent>
       <CardFooter className="flex-col space-y-4">
-        <Link href="/auth/reset-password" className="text-sm text-purple-600 hover:underline">
+        <Link href="/auth/reset-password-form" className="text-sm text-purple-600 hover:underline">
           パスワードをお忘れの方
         </Link>
         <p className="text-sm text-gray-600">
