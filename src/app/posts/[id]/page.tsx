@@ -5,18 +5,30 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Heart, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/types/post'
 
-export default function PostDetail({ params }: { params: { id: string } }) {
+export default function PostDetail ({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isOwner, setIsOwner] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchPost = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUserId(user?.id || null)
       
       const { data, error } = await supabase
         .from('posts')
@@ -46,7 +58,6 @@ export default function PostDetail({ params }: { params: { id: string } }) {
         likes_count: count || 0,
         is_liked: data.likes?.some((like: { user_id: string }) => like.user_id === user?.id) || false
       })
-      setIsOwner(user?.id === data.user_id)
       setLoading(false)
     }
 
@@ -54,24 +65,75 @@ export default function PostDetail({ params }: { params: { id: string } }) {
   }, [params.id, router])
 
   const handleLike = async () => {
-    // 既存のいいね処理
+    if (!post) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    try {
+      if (post.is_liked) {
+        await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', post.id)
+          .eq('user_id', user.id)
+        
+        setPost({
+          ...post,
+          is_liked: false,
+          likes_count: post.likes_count - 1
+        })
+      } else {
+        await supabase
+          .from('likes')
+          .insert({
+            post_id: post.id,
+            user_id: user.id
+          })
+        
+        setPost({
+          ...post,
+          is_liked: true,
+          likes_count: post.likes_count + 1
+        })
+      }
+    } catch (error) {
+      console.error('いいねの更新に失敗しました:', error)
+    }
   }
 
   const handleDelete = async () => {
-    if (!post || !window.confirm('この投稿を削除してもよろしいですか？')) return
-
-    const { error } = await supabase
-      .from('posts')
-      .delete()
-      .eq('id', post.id)
-
-    if (error) {
-      console.error('削除に失敗しました:', error)
-      return
+    if (!post || !currentUserId || post.user_id !== currentUserId) return
+  
+    try {
+      // 1. まず画像をストレージから削除
+      const imageUrl = post.image_url
+      // URLからファイルパスを抽出（例: user123/2024-01-31T12:34:56.789Z.jpg）
+      const filePath = imageUrl.split('/posts/')[1]
+      
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from('posts')
+          .remove([filePath])
+  
+        if (storageError) {
+          throw new Error('画像の削除に失敗しました')
+        }
+      }
+  
+      // 2. DBから投稿を削除
+      const { error: dbError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', post.id)
+  
+      if (dbError) {
+        throw new Error('投稿の削除に失敗しました')
+      }
+  
+      router.push('/')
+    } catch (error) {
+      console.error('削除処理に失敗しました:', error)
     }
-
-    router.push('/')
-    router.refresh()
   }
 
   if (loading) return <div>読み込み中...</div>
@@ -97,20 +159,34 @@ export default function PostDetail({ params }: { params: { id: string } }) {
                   {new Date(post.created_at).toLocaleDateString()}
                 </div>
               </div>
-              <div className="flex gap-2">
-                {isOwner && (
-                  <Button 
-                    variant="destructive" 
-                    size="icon"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
-                )}
+              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={handleLike}>
                   <Heart className={`h-5 w-5 ${post.is_liked ? 'fill-current text-red-500' : ''}`} />
                   <span className="ml-1">{post.likes_count}</span>
                 </Button>
+                {currentUserId === post.user_id && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-5 w-5 text-red-500" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>投稿を削除しますか？</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          この操作は取り消せません。投稿と画像が完全に削除されます。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+                          削除する
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </div>
             <p className="text-gray-700 break-words">{post.description}</p>

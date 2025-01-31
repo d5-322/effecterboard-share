@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { ImagePlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -40,7 +39,7 @@ export function PostForm() {
 
       // 画像のアップロード（ユーザーごとのフォルダ構造）
       const fileExt = image.name.split('.').pop()
-      const fileName = `${user.id}/${Date.now()}-${Math.random()}.${fileExt}`
+      const fileName = `${user.id}/${new Date().toISOString()}.${fileExt}`
       
       const { error: uploadError } = await supabase.storage
         .from('posts')
