@@ -13,6 +13,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void
 }
 
+// ページネイション
 function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   const getPageNumbers = () => {
     const start = Math.max(1, currentPage - 1)

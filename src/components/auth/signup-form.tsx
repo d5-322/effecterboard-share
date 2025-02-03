@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { supabase } from '@/lib/supabase'
 
 export function SignUpForm() {
@@ -13,9 +14,15 @@ export function SignUpForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!agreedToTerms) {
+      setError('利用規約とプライバシーポリシーへの同意が必要です')
+      return
+    }
+    
     setLoading(true)
     setError(null)
 
@@ -29,7 +36,6 @@ export function SignUpForm() {
       })
       if (error) throw error
       
-      // サインアップ成功後、プロフィール設定ページへ
       router.push('/onboarding')
     } catch (error) {
       setError(error instanceof Error ? error.message : '登録エラーが発生しました')
@@ -71,8 +77,23 @@ export function SignUpForm() {
               minLength={6}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? '登録中...' : '次へ進む'}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="terms"
+              checked={agreedToTerms}
+              onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+            />
+            <label htmlFor="terms" className="text-sm text-gray-600">
+              <Link href="/terms" target="blank" className="text-purple-600 hover:underline">利用規約</Link>
+              に同意する
+            </label>
+          </div>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={loading || !agreedToTerms}
+          >
+            {loading ? '登録中...' : '登録する'}
           </Button>
         </form>
       </CardContent>

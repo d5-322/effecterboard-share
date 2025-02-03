@@ -57,7 +57,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
 
       {/* フッター */}
       <div className="p-4 flex items-center justify-between">
-        <span className="line-clamp-2 text-sm font-medium text-gray-700">
+        <span className="line-clamp-2 text-sm whitespace-pre-line font-medium text-gray-700">
           {post.description}
         </span>
         
