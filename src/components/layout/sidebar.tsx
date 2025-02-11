@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, PlusSquare, User, Settings, LogIn, UserPlus } from 'lucide-react'
+import { Home, PlusSquare, User, Settings, LogIn, UserPlus, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/ui/logo'
@@ -17,12 +17,14 @@ const authenticatedMenuItems = [
   { href: '/posts/new', icon: PlusSquare, label: '投稿' },
   { href: '/profile', icon: User, label: 'プロフィール' },
   { href: '/settings', icon: Settings, label: '設定' },
+  { href: '/terms', icon: FileText, label: '利用規約' },
 ]
 
 const unauthenticatedMenuItems = [
   { href: '/', icon: Home, label: 'ホーム' },
   { href: '/signin', icon: LogIn, label: 'ログイン' },
   { href: '/signup', icon: UserPlus, label: 'アカウント作成' },
+  { href: '/terms', icon: FileText, label: '利用規約' },
 ]
 
 export function Sidebar({ isMobile, onClose }: SidebarProps) {
@@ -34,7 +36,7 @@ export function Sidebar({ isMobile, onClose }: SidebarProps) {
     : 'fixed h-full w-64 border-r bg-white p-4'
 
   return (
-    <div className={baseStyles}>
+    <header className={baseStyles}>
       {!isMobile && (
         <div className="mb-8">
           <Logo />
@@ -54,6 +56,6 @@ export function Sidebar({ isMobile, onClose }: SidebarProps) {
         ))}
         {user && <SignOutButton />}
       </nav>
-    </div>
+    </header>
   )
 }

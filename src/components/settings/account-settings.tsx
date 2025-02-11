@@ -172,6 +172,7 @@ export function AccountSettings() {
               label="現在のパスワード"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="6文字以上"
               disabled={loading}
             />
             <InputField
@@ -187,6 +188,7 @@ export function AccountSettings() {
               label="新しいパスワード（確認）"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="6文字以上"
               disabled={loading}
             />
           </div>
