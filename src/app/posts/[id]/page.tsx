@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
 import { Heart, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,14 +19,10 @@ import {
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/types/post'
 
-type Props = {
-  params: {
-    id: string
-  }
-}
 
-export default function PostDetail({ params }: Props) {
+export default function PostDetail() {
   const router = useRouter()
+  const params = useParams<{ id: string }>()
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
