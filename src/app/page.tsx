@@ -82,7 +82,7 @@ export default function Home() {
     
     const { data: { user } } = await supabase.auth.getUser()
     
-    let query = supabase
+    const query = supabase
       .from('posts')
       .select(`
         *,

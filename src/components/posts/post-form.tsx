@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ImagePlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -91,7 +92,7 @@ export function PostForm() {
             <label className="block mb-2 text-sm font-medium">画像</label>
             <div className="border-2 border-dashed rounded-lg p-4 text-center">
               {preview ? (
-                <img src={preview} alt="Preview" className="max-h-48 mx-auto" />
+                <Image src={preview} alt="Preview" className="max-h-48 mx-auto" />
               ) : (
                 <div className="flex flex-col items-center">
                   <ImagePlus className="h-12 w-12 text-gray-400" />

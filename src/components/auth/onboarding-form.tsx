@@ -25,7 +25,7 @@ export function OnboardingForm() {
     if (username.length < 3) return
     setIsChecking(true)
     
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('username')
       .eq('username', username)

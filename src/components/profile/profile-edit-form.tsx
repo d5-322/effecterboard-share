@@ -9,7 +9,7 @@ import { ImagePlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/types/database.types'
 
-type Profile = Database['public']['Tables']['profiles']['Row']
+// type Profile = Database['public']['Tables']['profiles']['Row']
 
 export function ProfileEditForm() {
   const router = useRouter()
