@@ -19,7 +19,13 @@ import {
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/types/post'
 
-export default function PostDetail ({ params }: { params: { id: string } }) {
+type Props = {
+  params: {
+    id: string
+  }
+}
+
+export default function PostDetail({ params }: Props) {
   const router = useRouter()
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
@@ -109,7 +115,6 @@ export default function PostDetail ({ params }: { params: { id: string } }) {
     try {
       // 1. まず画像をストレージから削除
       const imageUrl = post.image_url
-      // URLからファイルパスを抽出（例: user123/2024-01-31T12:34:56.789Z.jpg）
       const filePath = imageUrl.split('/posts/')[1]
       
       if (filePath) {
