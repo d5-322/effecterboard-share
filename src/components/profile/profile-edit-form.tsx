@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { ImagePlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Database } from '@/types/database.types'
+// import type { Database } from '@/types/database.types'
 
 // type Profile = Database['public']['Tables']['profiles']['Row']
 
