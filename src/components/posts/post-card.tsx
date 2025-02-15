@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Heart } from 'lucide-react'
 import { Post } from '@/types/post'
 import Image from 'next/image'
+import { useAuth } from '@/contexts/auth-context'
 
 interface PostCardProps {
   post: Post
@@ -13,8 +14,16 @@ interface PostCardProps {
 
 export function PostCard({ post, onLike }: PostCardProps) {
   const router = useRouter()
-
-  const handleClick = () => router.push(`/posts/${post.id}`)
+  const { user } = useAuth() // Supabaseの認証状態を取得
+  
+  const handleClick = () => {
+    // 認証状態に応じて遷移先を変更
+    if (user) {
+      router.push(`/posts/${post.id}`)
+    } else {
+      router.push('/signup') // SignUpFormコンポーネントのパスに合わせて変更
+    }
+  }
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (['Enter', ' '].includes(e.key)) handleClick()
@@ -22,9 +31,14 @@ export function PostCard({ post, onLike }: PostCardProps) {
 
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onLike()
+    // いいね機能も認証済みユーザーのみに制限
+    if (user) {
+      onLike()
+    } else {
+      e.preventDefault()
+      router.push('/signup')
+    }
   }
-
 
   return (
     <div

@@ -14,7 +14,7 @@ interface SidebarProps {
 
 const authenticatedMenuItems = [
   { href: '/', icon: Home, label: 'ホーム' },
-  { href: '/posts/new', icon: PlusSquare, label: '投稿' },
+  { href: '/posts/new', icon: PlusSquare, label: '新規投稿' },
   { href: '/profile', icon: User, label: 'プロフィール' },
   { href: '/settings', icon: Settings, label: '設定' },
   { href: '/terms', icon: FileText, label: '利用規約' },
