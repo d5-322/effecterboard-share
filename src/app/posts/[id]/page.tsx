@@ -19,7 +19,6 @@ import {
 import { supabase } from '@/lib/supabase'
 import type { Post } from '@/types/post'
 
-
 export default function PostDetail() {
   const router = useRouter()
   const params = useParams<{ id: string }>()
