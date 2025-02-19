@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Edit } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 import type { Database } from '@/types/database.types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -19,7 +20,7 @@ export function ProfileHeader({ userId }: ProfileHeaderProps) {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -32,19 +33,24 @@ export function ProfileHeader({ userId }: ProfileHeaderProps) {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!userId) return
-
+  
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
-
+  
+      if (error) {
+        console.error('Error fetching profile:', error)
+        return
+      }
+  
       if (data) {
         setProfile(data)
       }
       setLoading(false)
     }
-
+  
     fetchProfile()
   }, [userId])
 

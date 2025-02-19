@@ -58,7 +58,7 @@ export function ProfilePosts({ userId }: ProfilePostsProps) {
 
   useEffect(() => {
     fetchUserPosts()
-  }, [userId])
+  }, [userId, fetchUserPosts])
 
   const handleLike = async (postId: string, isLiked: boolean) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -96,11 +96,6 @@ export function ProfilePosts({ userId }: ProfilePostsProps) {
     }
   }
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserPosts()
-    }
-  }, [userId])
 
   if (loading) {
     return <div>Loading...</div>
