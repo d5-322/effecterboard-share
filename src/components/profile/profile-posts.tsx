@@ -8,14 +8,19 @@ import type { Post } from '@/types/post'
 interface Like {
   user_id: string
 }
+interface ProfilePostsProps {
+  userId: string
+}
 
-export function ProfilePosts() {
+
+export function ProfilePosts({ userId }: ProfilePostsProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchUserPosts = async () => {
+    if (!userId) return
+    
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
 
     const { data, error } = await supabase
       .from('posts')
@@ -24,11 +29,11 @@ export function ProfilePosts() {
         profiles!inner (user_type, username),
         likes (user_id)
       `)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching posts:', error)
+      console.log('Posts fetch error:', error.message)
       return
     }
 
@@ -50,6 +55,10 @@ export function ProfilePosts() {
     setPosts(postsWithLikes)
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchUserPosts()
+  }, [userId])
 
   const handleLike = async (postId: string, isLiked: boolean) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -88,8 +97,10 @@ export function ProfilePosts() {
   }
 
   useEffect(() => {
-    fetchUserPosts()
-  }, [])
+    if (userId) {
+      fetchUserPosts()
+    }
+  }, [userId])
 
   if (loading) {
     return <div>Loading...</div>

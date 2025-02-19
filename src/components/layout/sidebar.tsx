@@ -12,23 +12,25 @@ interface SidebarProps {
   onClose?: () => void
 }
 
-const authenticatedMenuItems = [
-  { href: '/', icon: Home, label: 'ホーム' },
-  { href: '/posts/new', icon: PlusSquare, label: '新規投稿' },
-  { href: '/profile', icon: User, label: 'プロフィール' },
-  { href: '/settings', icon: Settings, label: '設定' },
-  { href: '/terms', icon: FileText, label: '利用規約' },
-]
-
-const unauthenticatedMenuItems = [
-  { href: '/', icon: Home, label: 'ホーム' },
-  { href: '/signin', icon: LogIn, label: 'ログイン' },
-  { href: '/signup', icon: UserPlus, label: 'アカウント作成' },
-  { href: '/terms', icon: FileText, label: '利用規約' },
-]
-
 export function Sidebar({ isMobile, onClose }: SidebarProps) {
   const { user } = useAuth()
+  
+  // ユーザーIDに基づいてメニュー項目を生成
+  const authenticatedMenuItems = [
+    { href: '/', icon: Home, label: 'ホーム' },
+    { href: '/posts/new', icon: PlusSquare, label: '新規投稿' },
+    { href: user ? `/profile/${user.id}` : '/profile', icon: User, label: 'プロフィール' },
+    { href: '/settings', icon: Settings, label: '設定' },
+    { href: '/terms', icon: FileText, label: '利用規約' },
+  ]
+
+  const unauthenticatedMenuItems = [
+    { href: '/', icon: Home, label: 'ホーム' },
+    { href: '/signin', icon: LogIn, label: 'ログイン' },
+    { href: '/signup', icon: UserPlus, label: '新規登録' },
+    { href: '/terms', icon: FileText, label: '利用規約' },
+  ]
+
   const menuItems = user ? authenticatedMenuItems : unauthenticatedMenuItems
   
   const baseStyles = isMobile 

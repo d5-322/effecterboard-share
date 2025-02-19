@@ -156,7 +156,15 @@ export default function PostDetail() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-gray-700 font-medium">{post.username}</div>
+                <div 
+                  className="text-gray-700 font-medium cursor-pointer hover:text-primary"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    router.push(`/profile/${post.user_id}`)
+                  }}
+                >
+                  {post.username}
+                </div>
                 <div className="text-sm text-gray-500">
                   {new Date(post.created_at).toLocaleDateString()}
                 </div>

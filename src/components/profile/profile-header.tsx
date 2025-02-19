@@ -11,33 +11,42 @@ import type { Database } from '@/types/database.types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 
-export function ProfileHeader() {
+interface ProfileHeaderProps {
+  userId: string
+}
+
+export function ProfileHeader({ userId }: ProfileHeaderProps) {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUser(user)
+    }
+    getCurrentUser()
+  }, [])
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!userId) return
 
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single()
 
-      if (error) {
-        console.error('Error fetching profile:', error)
-        return
+      if (data) {
+        setProfile(data)
       }
-
-      setProfile(data)
       setLoading(false)
     }
 
     fetchProfile()
-  }, [])
+  }, [userId])
 
   if (loading) {
     return <div>Loading...</div>
@@ -62,13 +71,15 @@ export function ProfileHeader() {
               <p className="mt-2 text-gray-600">{profile?.message}</p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => router.push('/profile/edit')}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+          {currentUser && currentUser.id === userId && (
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => router.push('/profile/edit')}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

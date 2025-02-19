@@ -24,6 +24,16 @@ export function PostCard({ post, onLike }: PostCardProps) {
       router.push('/signup') // SignUpFormコンポーネントのパスに合わせて変更
     }
   }
+
+  // ユーザー名クリックのハンドラ
+  const handleUsernameClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (user) {
+      router.push(`/profile/${post.user_id}`)
+    } else {
+      router.push('/signup')
+    }
+  }
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (['Enter', ' '].includes(e.key)) handleClick()
@@ -50,7 +60,11 @@ export function PostCard({ post, onLike }: PostCardProps) {
     >
       {/* ヘッダー */}
       <div className="flex items-center justify-between p-4">
-        <span className="text-sm font-medium text-gray-700">
+        <span 
+          role="button"
+          onClick={handleUsernameClick}
+          className="text-sm font-medium text-gray-700 hover:text-primary cursor-pointer"
+        >
           {post.username}
         </span>
         <div className="text-sm text-gray-500">
