@@ -92,7 +92,7 @@ export function PostForm() {
             <label className="block mb-2 text-sm font-medium">画像</label>
             <div className="border-2 border-dashed rounded-lg p-4 text-center">
               {preview ? (
-                <Image src={preview} alt="Preview" className="max-h-48 mx-auto" />
+                <img src={preview} alt="Preview" className="max-h-48 mx-auto" />
               ) : (
                 <div className="flex flex-col items-center">
                   <ImagePlus className="h-12 w-12 text-gray-400" />

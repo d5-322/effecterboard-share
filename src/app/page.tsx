@@ -75,7 +75,7 @@ function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) 
 function Spinner() {
   return (
     <div className="flex justify-center items-center p-4">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
     </div>
   )
 }
@@ -196,8 +196,8 @@ export default function Home() {
         // 初回ロード時のフルスクリーンローディング
         <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
           <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            <p className="mt-4 text-blue-600 font-medium">投稿を読み込んでいます...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+            <p className="mt-4 text-purple-600 font-medium">投稿を読み込んでいます...</p>
           </div>
         </div>
       ) : (
@@ -209,7 +209,7 @@ export default function Home() {
               <select 
                 value={sort}
                 onChange={(e) => handleSortChange(e.target.value as 'newest' | 'oldest')}
-                className="appearance-none w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 pl-4 pr-10 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="appearance-none w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 pl-4 pr-10 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
               >
                 <option value="newest">新しい順</option>
                 <option value="oldest">古い順</option>
