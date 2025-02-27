@@ -265,7 +265,7 @@ export default function PostDetail() {
                 </div>
               </div>
 
-              {/* 投稿管理アクション */}
+              {/* 投稿削除アクション */}
               {currentUserId === post.user_id && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -360,10 +360,9 @@ function LoadingState() {
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10"></div>
-            <h1 className="text-xl font-semibold">読み込み中...</h1>
-            <div className="w-10"></div>
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+            <p className="mt-4 mb-4 text-purple-600 font-medium">投稿を読み込んでいます...</p>
           </div>
           
           <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
