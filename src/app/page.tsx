@@ -105,7 +105,7 @@ export default function Home() {
         .from('posts')
         .select(`
           *,
-          profiles!inner (username),
+          profiles!inner (username , avatar_url),
           likes (user_id)
         `, { count: 'exact' })
         .order('created_at', { ascending: sort === 'oldest' })
