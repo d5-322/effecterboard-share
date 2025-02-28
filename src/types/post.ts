@@ -1,3 +1,9 @@
+interface Profile {
+  username: string;
+  avatar_url: string;
+}
+
+
 export interface Post {
   id: string;
   user_id: string;
@@ -8,4 +14,5 @@ export interface Post {
   created_at: string;
   likes_count: number;
   is_liked: boolean;
+  profiles: Profile;
 }

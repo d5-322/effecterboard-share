@@ -72,7 +72,7 @@ export function ProfileContents({ userId }: ProfileProps) {
         .from('posts')
         .select(`
           *,
-          profiles!inner (user_type, username),
+          profiles!inner (user_type, username , avatar_url),
           likes (user_id)
         `)
         .eq('user_id', userId)
@@ -94,6 +94,7 @@ export function ProfileContents({ userId }: ProfileProps) {
           ...post,
           user_type: post.profiles.user_type,
           username: post.profiles.username,
+          user_avatar: post.profiles.avatar_url,
           likes_count: count || 0,
           is_liked: post.likes?.some((like: Like) => like.user_id === user?.id) || false
         }
