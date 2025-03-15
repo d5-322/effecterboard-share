@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { ChevronDown, ChevronUp, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function AccountSettings() {
   const router = useRouter()
@@ -15,6 +21,7 @@ export function AccountSettings() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [activeItem, setActiveItem] = useState<string | null>(null)
 
   // 現在のユーザー情報の取得
   useEffect(() => {
@@ -32,6 +39,7 @@ export function AccountSettings() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setSuccessMessage(null)
 
     if (currentEmail === newEmail) {
       setError('現在のメールアドレスと同じです')
@@ -44,13 +52,11 @@ export function AccountSettings() {
         email: newEmail,
       })
 
-      // Supabaseのエラーコードを確認
       if (error) {
-        // エラーメッセージまたはエラーコードに基づいて判定
         if (error.message.includes('already taken') || 
             error.message.includes('already exists') || 
             error.message.toLowerCase().includes('already registered') ||
-            error.status === 422) {  // 422はUnprocessable Entityエラー
+            error.status === 422) {
           setError('このメールアドレスは既に他のユーザーに使用されています')
           setLoading(false)
           return
@@ -58,11 +64,11 @@ export function AccountSettings() {
         throw error
       }
 
-      // エラーがない場合は確認ページへ
       router.push('/settings/email-verification')
     } catch (error) {
-      console.error('Email update error:', error)  // デバッグ用
+      console.error('Email update error:', error)
       setError(error instanceof Error ? error.message : 'メールアドレスの更新に失敗しました')
+    } finally {
       setLoading(false)
     }
   }
@@ -121,115 +127,157 @@ export function AccountSettings() {
     }
   }
 
+  // メッセージ表示コンポーネント
+  const StatusMessage = () => {
+    if (!error && !successMessage) return null;
+    
+    return (
+      <Alert className={error ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"}>
+        {error ? <AlertCircle className="h-4 w-4 text-red-500" /> : <CheckCircle className="h-4 w-4 text-green-500" />}
+        <AlertDescription className={error ? "text-red-500" : "text-green-500"}>
+          {error || successMessage}
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
   return (
-    <div className="bg-white border rounded-lg shadow-sm">
-      <div className="px-6 py-4 border-b">
-        <h2 className="text-2xl font-bold">アカウント設定</h2>
-      </div>
+    <Card className="bg-white rounded-lg shadow-sm">
+      <CardHeader className="pb-2 border-b">
+        <CardTitle className="text-2xl font-bold">アカウント設定</CardTitle>
+      </CardHeader>
 
-      <div className="px-6 py-6 space-y-6">
-        {/* メッセージ表示エリア */}
-        {(error || successMessage) && (
-          <div className={`p-3 text-sm rounded-md ${
-            error ? 'text-red-500 bg-red-50' : 'text-green-500 bg-green-50'
-          }`}>
-            {error || successMessage}
-          </div>
-        )}
+      <CardContent className="py-4 space-y-4">
+        <StatusMessage />
 
-        {/* メールアドレス変更フォーム */}
-        <form onSubmit={handleEmailUpdate} className="space-y-4">
-          <h3 className="text-lg font-semibold">メールアドレス変更</h3>
-          <div className="space-y-4">
-            <InputField
-              label="現在のメールアドレス"
-              value={currentEmail}
-              disabled
-            />
-            <InputField
-              label="新しいメールアドレス"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              placeholder="新しいメールアドレスを入力"
-              disabled={loading}
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full sm:w-auto"
-            disabled={loading || !newEmail}
-          >
-            {loading ? '変更中...' : '変更する'}
-          </Button>
-        </form>
+        <Accordion type="single" collapsible>
+          {/* メールアドレス変更セクション */}
+          <AccordionItem value="email">
+            <AccordionTrigger className="py-4 flex items-center">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 rounded-full p-2">
+                  <Mail className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-medium">メールアドレス変更</h3>
+                  <p className="text-sm text-gray-500">{currentEmail}</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <form onSubmit={handleEmailUpdate} className="space-y-4 pt-2">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-email">現在のメールアドレス</Label>
+                    <Input
+                      id="current-email"
+                      value={currentEmail}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-email">新しいメールアドレス</Label>
+                    <Input
+                      id="new-email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="新しいメールアドレスを入力"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto"
+                  disabled={loading || !newEmail}
+                >
+                  {loading ? '変更中...' : 'メールアドレスを変更する'}
+                </Button>
+              </form>
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* パスワード変更フォーム */}
-        <form onSubmit={handlePasswordUpdate} className="space-y-4">
-          <h3 className="text-lg font-semibold">パスワード変更</h3>
-          <div className="space-y-4">
-            <InputField
-              type="password"
-              label="現在のパスワード"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="6文字以上"
-              disabled={loading}
-            />
-            <InputField
-              type="password"
-              label="新しいパスワード"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="6文字以上"
-              disabled={loading}
-            />
-            <InputField
-              type="password"
-              label="新しいパスワード（確認）"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="6文字以上"
-              disabled={loading}
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full sm:w-auto"
-            disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-          >
-            {loading ? '変更中...' : '変更する'}
-          </Button>
-        </form>
-      </div>
-    </div>
+          {/* パスワード変更セクション */}
+          <AccordionItem value="password">
+            <AccordionTrigger className="py-4 flex items-center">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-100 rounded-full p-2">
+                  <Lock className="h-5 w-5 text-purple-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-medium">パスワード変更</h3>
+                  <p className="text-sm text-gray-500">セキュリティのため定期的に変更してください</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <form onSubmit={handlePasswordUpdate} className="space-y-4 pt-2">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">現在のパスワード</Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="現在のパスワードを入力"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">新しいパスワード</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="6文字以上"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">新しいパスワード（確認）</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="6文字以上"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto"
+                  disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+                >
+                  {loading ? '変更中...' : 'パスワードを変更する'}
+                </Button>
+              </form>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 将来の機能のためのプレースホルダー、必要に応じて追加可能 */}
+          {/* <AccordionItem value="example">
+            <AccordionTrigger className="py-4 flex items-center">
+              <div className="flex items-center gap-3">
+                <div className="bg-amber-100 rounded-full p-2">
+                  <Bell className="h-5 w-5 text-amber-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-medium">通知設定</h3>
+                  <p className="text-sm text-gray-500">メールや通知の受信設定</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <p>将来的に実装予定の機能です</p>
+            </AccordionContent>
+          </AccordionItem> */}
+        </Accordion>
+      </CardContent>
+    </Card>
   )
 }
-
-// 再利用可能な入力フィールドコンポーネント
-const InputField = ({
-  type = 'text',
-  label,
-  value,
-  onChange,
-  placeholder,
-  disabled,
-}: {
-  type?: string
-  label: string
-  value: string
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  placeholder?: string
-  disabled?: boolean
-}) => (
-  <div>
-    <label className="block mb-2 text-sm font-medium">{label}</label>
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-      placeholder={placeholder}
-      disabled={disabled}
-    />
-  </div>
-)

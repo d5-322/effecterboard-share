@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function DeleteAccount() {
@@ -29,6 +34,7 @@ export function DeleteAccount() {
 
       if (signInError) {
         setError('パスワードが正しくありません')
+        setLoading(false)
         return
       }
 
@@ -48,112 +54,94 @@ export function DeleteAccount() {
   }
 
   return (
-    <div className="border border-red-100 rounded-lg bg-red-50/30 shadow-sm">
-      <div className="px-6 py-4 border-b border-red-100">
-        <h2 className="text-2xl font-bold text-red-600">アカウント削除</h2>
-      </div>
+    <Card className="border border-red-200 bg-red-50/30 shadow-sm">
+      <CardHeader className="border-b border-red-200 pb-4">
+        <CardTitle className="flex items-center gap-2 text-2xl font-bold text-red-600">
+          <Trash2 className="h-6 w-6" />
+          アカウント削除
+        </CardTitle>
+      </CardHeader>
 
-      <div className="px-6 py-6 space-y-6">
-        <AlertMessage message={error} type="error" />
+      <CardContent className="pt-6 space-y-6">
+        {error && (
+          <Alert className="bg-red-50 border-red-200">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertDescription className="text-red-500">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {!isConfirmOpen ? (
-          <div className="space-y-4">
-            <p className="text-gray-600 leading-relaxed">
-              アカウントを削除すると全てのデータが完全に削除され、復元できません。
-            </p>
+          <div className="space-y-6">
+            <div className="rounded-lg bg-red-100/50 p-4 border border-red-200">
+              <h3 className="font-semibold mb-2 text-red-700">ご注意ください</h3>
+              <p className="text-gray-700 leading-relaxed text-sm">
+                • アカウントを削除すると、すべてのデータが完全に削除されます<br />
+                • 削除後のデータは復元できません
+              </p>
+            </div>
+
             <Button
               variant="destructive"
               onClick={() => setIsConfirmOpen(true)}
               className="w-full sm:w-auto"
             >
-              アカウントを削除する
+              アカウント削除手続きを開始する
             </Button>
           </div>
         ) : (
           <form onSubmit={handleDelete} className="space-y-6">
-            <p className="text-red-600 font-medium">
-              本当にアカウントを削除しますか？
-            </p>
+            <div className="rounded-lg bg-red-100/50 p-4 border border-red-200">
+              <h3 className="font-semibold mb-2 text-red-700">最終確認</h3>
+              <p className="text-gray-700 leading-relaxed text-sm">
+                アカウントを削除すると、すべてのプロファイル情報、保存データ、設定が削除されます。
+                この操作は取り消すことができません。
+              </p>
+            </div>
 
             <div className="space-y-4">
-              <Input
-                type="password"
-                label="パスワードを入力して確認"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password" className="text-gray-700">
+                  パスワードを入力して確認
+                </Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="border-red-200 focus:border-red-400 focus:ring-red-400"
+                  placeholder="現在のパスワードを入力"
+                  required
+                />
+              </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsConfirmOpen(false)}
-                  className="flex-1"
+                  onClick={() => {
+                    setIsConfirmOpen(false)
+                    setPassword('')
+                    setError(null)
+                  }}
+                  className="flex-1 border-gray-300"
                 >
                   キャンセル
                 </Button>
                 <Button
                   type="submit"
                   variant="destructive"
-                  disabled={loading}
+                  disabled={loading || !password}
                   className="flex-1"
                 >
-                  {loading ? '削除中...' : '削除する'}
+                  {loading ? '削除中...' : '完全に削除する'}
                 </Button>
               </div>
             </div>
           </form>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
-
-// 再利用可能なコンポーネント
-const AlertMessage = ({ 
-  message, 
-  type 
-}: {
-  message: string | null
-  type: 'error' | 'success'
-}) => {
-  if (!message) return null
-
-  return (
-    <div className={`p-3 text-sm rounded-md ${
-      type === 'error' 
-        ? 'text-red-600 bg-red-50' 
-        : 'text-green-600 bg-green-50'
-    }`}>
-      {message}
-    </div>
-  )
-}
-
-const Input = ({
-  type = 'text',
-  label,
-  value,
-  onChange,
-  required = false
-}: {
-  type?: string
-  label: string
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  required?: boolean
-}) => (
-  <div>
-    <label className="block mb-2 text-sm font-medium text-gray-700">
-      {label}
-    </label>
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      className="w-full p-2 border rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
-      required={required}
-    />
-  </div>
-)
