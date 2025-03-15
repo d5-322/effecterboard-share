@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, ChevronUp, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react'
+import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,6 @@ export function AccountSettings() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [activeItem, setActiveItem] = useState<string | null>(null)
 
   // 現在のユーザー情報の取得
   useEffect(() => {
